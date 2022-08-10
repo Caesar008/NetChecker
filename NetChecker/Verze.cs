@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 using Microsoft.Win32;
+using System.Diagnostics;
 
 namespace NetChecker
 {
@@ -10,7 +11,7 @@ namespace NetChecker
         internal string verze()
         {
             string result = "";
-            result = "Installed versions .NET:\r\n";
+            result = "Installed .NET versions:\r\n\r\nFramework:\r\n";
             // Opens the registry key for the .NET Framework entry. 
             using (RegistryKey ndpKey =
                 RegistryKey.OpenRemoteBaseKey(RegistryHive.LocalMachine, "").
@@ -76,9 +77,48 @@ namespace NetChecker
                 int releaseKey = Convert.ToInt32(ndpKey.GetValue("Release"));
                 if (true)
                 {
-                    result += "\r\n.NET 4.5 and newer:\r\nVersion: " + CheckFor45DotVersion(releaseKey) + "\r\n";
+                    result += "\r\n.NET Framework 4.5 and newer: " + CheckFor45DotVersion(releaseKey) + "\r\n\r\n";
                 }
             }
+
+            Process cmd = new Process();
+            cmd.StartInfo.FileName = "cmd.exe";
+            cmd.StartInfo.RedirectStandardInput = true;
+            cmd.StartInfo.RedirectStandardOutput = true;
+            cmd.StartInfo.CreateNoWindow = true;
+            cmd.StartInfo.UseShellExecute = false;
+            cmd.Start();
+            cmd.BeginOutputReadLine();
+
+            cmd.StandardInput.WriteLine("dotnet --version > " + System.IO.Path.GetTempPath() + "/dotnet");
+            
+            cmd.StandardInput.Flush();
+            cmd.StandardInput.Close();
+            cmd.WaitForExit();
+            result += ".NET Core: " + System.IO.File.ReadAllText(System.IO.Path.GetTempPath() + "/dotnet") + "\r\n";
+            System.IO.File.Delete(System.IO.Path.GetTempPath() + "/dotnet");
+
+            cmd = new Process();
+            cmd.StartInfo.FileName = "cmd.exe";
+            cmd.StartInfo.RedirectStandardInput = true;
+            cmd.StartInfo.RedirectStandardOutput = true;
+            cmd.StartInfo.CreateNoWindow = true;
+            cmd.StartInfo.UseShellExecute = false;
+            cmd.Start();
+            cmd.BeginOutputReadLine();
+
+            cmd.StandardInput.WriteLine("dotnet --list-runtimes > " + System.IO.Path.GetTempPath() + "/dotnet");
+            
+            cmd.StandardInput.Flush();
+            cmd.StandardInput.Close();
+            cmd.WaitForExit();
+            result += ".NET Core Runtimes:\r\n";
+            foreach(string s in System.IO.File.ReadAllLines(System.IO.Path.GetTempPath() + "/dotnet"))
+            {
+                result += s.Split('[')[0];
+            }
+            System.IO.File.Delete(System.IO.Path.GetTempPath() + "/dotnet");
+
             return result;
         }
 
