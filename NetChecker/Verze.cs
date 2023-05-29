@@ -124,7 +124,7 @@ namespace NetChecker
 
         private static string CheckFor45DotVersion(int releaseKey)
         {
-            if (releaseKey >= 533325)
+            if (releaseKey >= 533320)
             {
                 return "4.8.1 or newer";
             }
